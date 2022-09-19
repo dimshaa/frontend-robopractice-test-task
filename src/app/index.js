@@ -1,10 +1,12 @@
 import api from "../utils/Api";
 
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableRow } from "@mui/material";
+import { Table, TableBody, TableCell, TableRow, TextField } from "@mui/material";
 
 export const App = () => {
   const [usersData, setUsersData] = useState([]);
+  const [query, setQuery] = useState('');
+  const [usersDataToRender, setUsersDataToRender] = useState([])
 
   useEffect(() => {
     api.getData()
@@ -27,11 +29,10 @@ export const App = () => {
   }
 
   const mappedUserData = usersData.map(user => {
-
     let arr = new Array(31).fill(0);
     let totalSpent = 0;
-    user.Days.map((day, index) => {
 
+    user.Days.map((day) => {
       arr[new Date(day.Date).getDate() - 1] = {
         date: new Date(day.Date).getDate(),
         start: strToMinutes(day.Start),
@@ -40,18 +41,27 @@ export const App = () => {
       }
 
       return totalSpent += (strToMinutes(day.End) - strToMinutes(day.Start));
-    })
+    });
 
     return { id: user.id, fullname: user.Fullname, days: arr, totalSpent };
   });
 
-  console.log(mappedUserData);
+  const handleUserSearch = (e) => {
+    setQuery(e.target.value.toLowerCase());
+  }
+
+  useEffect(() => {
+    let result = mappedUserData.filter((user) => user.fullname.toLowerCase().includes(query));
+    setUsersDataToRender(result);
+  }, [query, mappedUserData]);
 
   return (
+    <>
+    <TextField onChange={handleUserSearch} value={query} label="Search" variant="standard"></TextField>
     <Table>
       <TableBody>
-        {
-          mappedUserData.map(user => {
+        {usersDataToRender &&
+          usersDataToRender.map(user => {
             return (
               <TableRow key={user.id}>
                 <TableCell>
@@ -73,5 +83,6 @@ export const App = () => {
         }
       </TableBody>
     </Table>
+    </>
   );
 }
