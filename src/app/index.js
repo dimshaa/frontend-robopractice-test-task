@@ -9,7 +9,6 @@ export const App = () => {
   useEffect(() => {
     api.getData()
       .then(users => {
-        console.log(users[0]);
         setUsersData(users);
       })
       .catch(err => console.log(err));
@@ -22,29 +21,52 @@ export const App = () => {
     return hours * 60 + minutes;
   }
 
-  const spentTime = (start, end) => {
-    const time = strToMinutes(end) - strToMinutes(start);
+  const countSpentTime = (time) => {
 
-    return `${parseInt(time / 60)}:${time % 60}`
+    return `${parseInt(time / 60)}:${time % 60}`;
   }
+
+  const mappedUserData = usersData.map(user => {
+
+    let arr = new Array(31).fill(0);
+    let totalSpent = 0;
+    user.Days.map((day, index) => {
+
+      arr[new Date(day.Date).getDate() - 1] = {
+        date: new Date(day.Date).getDate(),
+        start: strToMinutes(day.Start),
+        end: strToMinutes(day.End),
+        spent: strToMinutes(day.End) - strToMinutes(day.Start),
+      }
+
+      return totalSpent += (strToMinutes(day.End) - strToMinutes(day.Start));
+    })
+
+    return { id: user.id, fullname: user.Fullname, days: arr, totalSpent };
+  });
+
+  console.log(mappedUserData);
 
   return (
     <Table>
       <TableBody>
         {
-          usersData.map(user => {
+          mappedUserData.map(user => {
             return (
               <TableRow key={user.id}>
                 <TableCell>
-                  {user.Fullname}
+                  {user.fullname}
                 </TableCell>
-                {user.Days.map((day, index) => {
+                {user.days.map((day, index) => {
                   return (
                     <TableCell key={index}>
-                      {day ? spentTime(day.Start, day.End) : 0}
+                      {(day.date) ? countSpentTime(day.spent) : 0}
                     </TableCell>
                   )
                 })}
+                <TableCell>
+                  {countSpentTime(user.totalSpent)}
+                </TableCell>
               </TableRow>
             )
           })
